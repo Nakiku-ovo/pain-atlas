@@ -127,7 +127,9 @@ pain-atlas/
 
 ## 许可证
 
-文档与知识内容采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可。你可以复制、修改、商用、再发布，唯一要求是署名。
+Copyright (c) 2026 Nakiku-ovo
+
+文档与知识内容采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可，全文见仓库根目录 `LICENSE`。你可以复制、修改、商用、再发布，唯一要求是署名。
 
 ## 版本
 
