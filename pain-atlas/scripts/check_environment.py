@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""只读环境检查：确认本 Skill 的资料表完整、检索脚本可运行。
+"""只读环境检查：确认本 Skill 的资料表完整且结构合法、检索脚本可运行。
 
 不联网、不写文件、不安装、不修改配置、不读取凭据。
 
@@ -9,7 +9,7 @@
 输出四种状态之一:
     ready         全部就绪，直接进入正常流程
     partial       可选能力缺失，核心流程照常
-    needs_setup   必需项缺失
+    needs_setup   资料表损坏或不完整，必须先修复
     unavailable   Skill 目录损坏
 
 退出码:
@@ -33,6 +33,14 @@ REQUIRED_REFERENCES = (
 )
 OPTIONAL_SCRIPTS = ("atlas_query.py",)
 MIN_PYTHON = (3, 8)
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from atlas_query import MIN_ENTRIES, load_entries, verify_entries
+except ImportError:  # 检索脚本缺失时降级为只检查文件存在
+    load_entries = None
+    verify_entries = None
+    MIN_ENTRIES = 50
 
 
 def main() -> int:
@@ -64,18 +72,41 @@ def main() -> int:
     for name in missing:
         print(f"  - 缺失：references/{name}")
 
-    absent_scripts = [name for name in OPTIONAL_SCRIPTS if not (scripts / name).is_file()]
-    if absent_scripts:
-        print(f"- 可选脚本缺失：{', '.join(absent_scripts)}")
-
     if missing:
         print("- 总体状态：unavailable")
         print("- 故障项：核心资料表缺失，判型与对位无法依据任何数据完成")
         print("- 下一步：停止。不要凭记忆替代缺失的资料表，那会直接导致编造引文")
         return 3
 
+    # 资料表结构校验：截断、字段缺失、等级或四型取值非法都会在这里被拦住
+    entries = None
+    issues: list[str] = []
+    if load_entries is not None and verify_entries is not None:
+        try:
+            entries = load_entries(refs / "genealogy.md")
+            issues = verify_entries(entries)
+        except (OSError, UnicodeError) as exc:
+            issues = [f"资料表无法读取：{exc}"]
+
+        if issues:
+            print(f"- 资料表校验：不通过，共 {len(issues)} 项")
+            for issue in issues[:12]:
+                print(f"  - {issue}")
+            if len(issues) > 12:
+                print(f"  - 另有 {len(issues) - 12} 项未列出，运行 atlas_query.py --verify 查看全部")
+            print("- 总体状态：needs_setup")
+            print("- 故障项：谱系表结构损坏或不完整，检索结果会漏条或错配")
+            print("- 下一步：修复 references/genealogy.md 后重新运行本检查；修复前不要拿它做对位")
+            return 2
+
+        print(f"- 资料表校验：通过（{len(entries)} 条，下限 {MIN_ENTRIES}）")
+    else:
+        print("- 资料表校验：未执行（atlas_query.py 不可用）")
+
+    absent_scripts = [name for name in OPTIONAL_SCRIPTS if not (scripts / name).is_file()]
+
     if not python_ok:
-        print(f"- 总体状态：partial")
+        print("- 总体状态：partial")
         print(f"- 缺失可选项：Python 需 {MIN_PYTHON[0]}.{MIN_PYTHON[1]}+，当前不满足")
         print("- 受影响功能：谱系检索需改用目视读表")
         print("- 降级：直接读 references/genealogy.md，按「类别」「四型」两栏筛选，结果等价")
@@ -84,12 +115,12 @@ def main() -> int:
 
     if absent_scripts:
         print("- 总体状态：partial")
-        print("- 受影响功能：谱系检索脚本不可用")
+        print("- 受影响功能：谱系检索与资料表校验脚本不可用")
         print("- 降级：直接读 references/genealogy.md，按「类别」「四型」两栏筛选，结果等价")
         print("- 下一步：照常执行分析")
         return 1
 
-    print("- 已通过：SKILL.md、五份资料表、检索脚本、Python 运行时")
+    print("- 已通过：SKILL.md、五份资料表、资料表结构校验、检索脚本、Python 运行时")
     print("- 缺失必需项：无")
     print("- 缺失可选项：无（联网核验不属本次检查范围）")
     print("- 总体状态：ready")

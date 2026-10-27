@@ -43,22 +43,35 @@ cp -r pain-atlas/pain-atlas ~/.workbuddy/skills/
 ## 目录结构
 
 ```
-pain-atlas/
-├── SKILL.md                      触发判断、双口径路由、四段式流程、验收清单、停止条件
-├── skill-dependencies.json       依赖与功能级降级映射
-├── references/
-│   ├── genealogy.md              50 条谱系总表，全包唯一数据源
-│   ├── typology.md               两层结构、四型判定、追问引擎
-│   ├── paths.md                  出路类型学（逃/战/醒/清 ＋ 5 条支线）＋ 全表归属映射
-│   ├── citation-rules.md         A/B/C 三级引证、10 条高频误引、译名对照
-│   ├── crisis-boundary.md        危机信号、停止规则、转介资源
-│   └── setup-guide.md            Python 运行时配置与验证
-└── scripts/
-    ├── atlas_query.py            按四型/类别/等级/关键词检索谱系表
-    └── check_environment.py      只读自检，输出 ready / partial / unavailable
+pain-atlas/                        ← 仓库根
+├── README.md                      本文件
+├── LICENSE                        许可证（CC BY 4.0 官方全文）
+└── pain-atlas/                    ← 技能本体，把这一层拷进技能目录
+    ├── SKILL.md                   触发判断、双口径路由、四段式流程、验收清单、停止条件
+    ├── skill-dependencies.json    依赖与功能级降级映射
+    ├── references/
+    │   ├── genealogy.md           50 条谱系总表，全包唯一数据源
+    │   ├── typology.md            两层结构、四型判定、追问引擎
+    │   ├── paths.md               出路类型学（逃/战/醒/清 ＋ 12 条支线）＋ 全表归属映射
+    │   ├── citation-rules.md      A/B/C 三级引证、10 条高频误引、译名对照
+    │   ├── crisis-boundary.md     危机信号、停止规则、转介资源
+    │   └── setup-guide.md         Python 运行时配置与验证
+    └── scripts/
+        ├── atlas_query.py         谱系检索 ＋ 资料表结构校验（--verify）
+        └── check_environment.py   只读自检，输出 ready / partial / needs_setup / unavailable
 ```
 
 `genealogy.md` 是唯一数据源，`atlas_query.py` 直接解析它，不存在第二份副本。
+
+## 数据自检
+
+改过谱系表，或从别处拿到这个包时，先跑一次：
+
+```bash
+python scripts/atlas_query.py --verify
+```
+
+它会拦下四类问题：条目数低于下限、ID 断号或重复、必填字段缺失、等级或四型取值越界。不通过就不要拿它做对位——一个截断的资料表会让判型静默漏条，而输出看起来仍然正常。
 
 ## 谱系覆盖
 
@@ -90,6 +103,12 @@ pain-atlas/
 
 1. **「命题」栏是推演性读法，不是原话。** 「痛苦来自【X】」回答的是"这一派会怎么看痛苦"，不是"这一派说过痛苦来自 X"。
 2. **一律引节号，不引页码。** 中译本页码随印次变化，引节号才稳定。
+
+## 四型是受控词表
+
+判型、检索、谱系表的「四型」栏，只允许四个词：**肉身性、认知性、存在性、关系性**。
+
+「四型全覆盖」「四型收束」这类整体性描述单独放在「覆盖」栏，不写进四型。原因很实在：检索是按四型做集合匹配的，一旦把描述性文字混进去，那条会在四个型里全部筛不到——输出看起来正常，但整条谱系被静默跳过。
 
 ## 示例输出
 
@@ -133,4 +152,4 @@ Copyright (c) 2026 Nakiku-ovo
 
 ## 版本
 
-1.0.0
+1.1.0
