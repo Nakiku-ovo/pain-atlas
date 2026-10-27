@@ -1,0 +1,85 @@
+{
+  "schema_version": "1",
+  "capabilities": [
+    "谱系检索",
+    "判型与对位",
+    "引证核对"
+  ],
+  "dependencies": [
+    {
+      "id": "python-runtime",
+      "type": "runtime",
+      "required": false,
+      "auth_type": "none",
+      "capabilities": [
+        "谱系检索"
+      ],
+      "checks": [
+        {
+          "id": "python-version",
+          "type": "python",
+          "required": false,
+          "min_version": "3.8"
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://www.python.org/",
+        "official_docs_url": "https://docs.python.org/3/",
+        "steps": [
+          "打开 https://www.python.org/downloads/ 下载对应平台的稳定版",
+          "Windows 安装时勾选 Add python.exe to PATH；macOS 用官方安装包或 brew install python",
+          "新开终端执行 python --version 确认版本不低于 3.8",
+          "在 Skill 目录执行 python scripts/check_environment.py，出现 总体状态：ready 即完成"
+        ],
+        "verify": "python --version 与 python scripts/atlas_query.py --list 均成功，后者输出 50 条条目",
+        "security": "仅读取本 Skill 目录内的 Markdown 与自身代码，不联网、不写文件、不调用子进程、不读取环境变量与凭据",
+        "verified_at": "2026-10-27",
+        "applies_to_version": "3.8+"
+      },
+      "degradation": [
+        {
+          "capability": "谱系检索",
+          "trigger": "Python 缺失或版本低于 3.8，或 scripts/atlas_query.py 不可执行",
+          "fallback": "直接读 references/genealogy.md，按「类别」与「四型」两栏目视筛选，再按「等级」过滤",
+          "user_input": "无",
+          "limitations": "结果与脚本等价，但多条条件交叉时容易漏筛；不标注本次为人工筛选",
+          "evidence_label": "已验证",
+          "recovery": "安装 Python 3.8+ 后重跑 python scripts/check_environment.py",
+          "stop_condition": "资料表本身缺失或损坏时停止，不以记忆替代，避免编造引文"
+        }
+      ]
+    }
+  ],
+  "functional_degradations": [
+    {
+      "capability": "谱系检索",
+      "trigger": "Python 不可用或检索脚本缺失",
+      "fallback": "改为直接阅读 references/genealogy.md 并人工筛选",
+      "user_input": "无",
+      "limitations": "多条件交叉筛选效率下降，可能漏掉长尾条目",
+      "evidence_label": "已验证",
+      "recovery": "配置 Python 3.8+ 后重检",
+      "stop_condition": "资料表缺失时停止检索，不得凭记忆补写条目"
+    },
+    {
+      "capability": "判型与对位",
+      "trigger": "用户问题超出谱系表覆盖范围，或痛感信息不足以判别主型",
+      "fallback": "用最近邻的条目做类比，明确标注「类比，非该派原典」；判型写「主型待定」并列出两个候选及各自所需证据",
+      "user_input": "补充一句具体场景或身体感受",
+      "limitations": "类比不等同于原典定位；主型待定时不给出路",
+      "evidence_label": "部分验证",
+      "recovery": "用户补充信息后重新判型",
+      "stop_condition": "无法确定主型且用户要求明确答案时，说明证据不足，不硬选"
+    },
+    {
+      "capability": "引证核对",
+      "trigger": "无联网能力，或用户要求核对具体译本、版次、页码",
+      "fallback": "只使用谱系表内已核到篇目的 A 级条目，其余降为 B 或 C 并明示精度",
+      "user_input": "提供手头的书名、版次或书影",
+      "limitations": "不核对译本与页码；标记为「未联网核对」",
+      "evidence_label": "部分验证",
+      "recovery": "恢复联网后按 references/citation-rules.md 第六节重新核对",
+      "stop_condition": "用户要求断言某句为原话而无法核到篇目时，拒绝给引号，改给著作级定位"
+    }
+  ]
+}
